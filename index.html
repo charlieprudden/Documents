@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volume Docs chat bot architecture</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4ef;
+  --color-background-tertiary: #faf9f5;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #5f5e5a;
+  --color-text-tertiary: #888780;
+  --color-border-tertiary: rgba(60,60,55,0.15);
+  --color-border-secondary: rgba(60,60,55,0.3);
+  --color-border-primary: rgba(60,60,55,0.4);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --t: #5f5e5a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #1a1a18;
+    --color-background-secondary: #2c2c2a;
+    --color-background-tertiary: #1a1a18;
+    --color-text-primary: #f5f4ef;
+    --color-text-secondary: #b4b2a9;
+    --color-text-tertiary: #888780;
+    --color-border-tertiary: rgba(245,244,239,0.15);
+    --color-border-secondary: rgba(245,244,239,0.3);
+    --color-border-primary: rgba(245,244,239,0.4);
+    --t: #b4b2a9;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--color-background-primary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--color-border-tertiary);
+  padding: 1.5rem 2rem 2rem;
+}
+h1 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 0.25rem;
+}
+.subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 1.5rem;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+text { font-family: var(--font-sans); fill: var(--color-text-primary); }
+.t { font-size: 14px; }
+.ts { font-size: 12px; fill: var(--color-text-secondary); }
+.th { font-size: 14px; font-weight: 500; }
+rect.c-blue, .c-blue > rect { fill: #E6F1FB; stroke: #185FA5; }
+.c-blue > text.th, .c-blue > text.t, g:has(> rect.c-blue) > text.th, g:has(> rect.c-blue) > text.t { fill: #0C447C; }
+.c-blue > text.ts, g:has(> rect.c-blue) > text.ts { fill: #185FA5; }
+rect.c-purple, .c-purple > rect { fill: #EEEDFE; stroke: #534AB7; }
+.c-purple > text.th, .c-purple > text.t, g:has(> rect.c-purple) > text.th, g:has(> rect.c-purple) > text.t { fill: #3C3489; }
+.c-purple > text.ts, g:has(> rect.c-purple) > text.ts { fill: #534AB7; }
+rect.c-amber, .c-amber > rect { fill: #FAEEDA; stroke: #BA7517; }
+.c-amber > text.th, .c-amber > text.t, g:has(> rect.c-amber) > text.th, g:has(> rect.c-amber) > text.t { fill: #633806; }
+.c-amber > text.ts, g:has(> rect.c-amber) > text.ts { fill: #854F0B; }
+rect.c-teal, .c-teal > rect { fill: #E1F5EE; stroke: #0F6E56; }
+.c-teal > text.th, .c-teal > text.t, g:has(> rect.c-teal) > text.th, g:has(> rect.c-teal) > text.t { fill: #085041; }
+.c-teal > text.ts, g:has(> rect.c-teal) > text.ts { fill: #0F6E56; }
+rect.c-gray, .c-gray > rect { fill: #F1EFE8; stroke: #5F5E5A; }
+.c-gray > text.th, .c-gray > text.t, g:has(> rect.c-gray) > text.th, g:has(> rect.c-gray) > text.t { fill: #444441; }
+.c-gray > text.ts, g:has(> rect.c-gray) > text.ts { fill: #5F5E5A; }
+@media (prefers-color-scheme: dark) {
+  rect.c-blue, .c-blue > rect { fill: #0C447C; stroke: #85B7EB; }
+  .c-blue > text.th, .c-blue > text.t, g:has(> rect.c-blue) > text.th, g:has(> rect.c-blue) > text.t { fill: #B5D4F4; }
+  .c-blue > text.ts, g:has(> rect.c-blue) > text.ts { fill: #85B7EB; }
+  rect.c-purple, .c-purple > rect { fill: #3C3489; stroke: #AFA9EC; }
+  .c-purple > text.th, .c-purple > text.t, g:has(> rect.c-purple) > text.th, g:has(> rect.c-purple) > text.t { fill: #CECBF6; }
+  .c-purple > text.ts, g:has(> rect.c-purple) > text.ts { fill: #AFA9EC; }
+  rect.c-amber, .c-amber > rect { fill: #633806; stroke: #EF9F27; }
+  .c-amber > text.th, .c-amber > text.t, g:has(> rect.c-amber) > text.th, g:has(> rect.c-amber) > text.t { fill: #FAC775; }
+  .c-amber > text.ts, g:has(> rect.c-amber) > text.ts { fill: #EF9F27; }
+  rect.c-teal, .c-teal > rect { fill: #085041; stroke: #5DCAA5; }
+  .c-teal > text.th, .c-teal > text.t, g:has(> rect.c-teal) > text.th, g:has(> rect.c-teal) > text.t { fill: #9FE1CB; }
+  .c-teal > text.ts, g:has(> rect.c-teal) > text.ts { fill: #5DCAA5; }
+  rect.c-gray, .c-gray > rect { fill: #444441; stroke: #B4B2A9; }
+  .c-gray > text.th, .c-gray > text.t, g:has(> rect.c-gray) > text.th, g:has(> rect.c-gray) > text.t { fill: #D3D1C7; }
+  .c-gray > text.ts, g:has(> rect.c-gray) > text.ts { fill: #B4B2A9; }
+}
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 14px; font-size: 12px; color: var(--color-text-secondary); align-items: center; }
+.legend .sw { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 10px; height: 10px; border-radius: 3px; }
+.tabs { display: flex; gap: 4px; margin: 0 0 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.tab { background: transparent; border: none; padding: 8px 14px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--color-text-primary); }
+.panel { display: none; }
+.panel.active { display: block; }
+.node-g rect { transition: opacity .25s, stroke-width .2s; cursor: pointer; }
+.node-g:hover rect { stroke-width: 1.5px; }
+.node-g.dim rect, .node-g.dim text, .node-g.dim line { opacity: 0.25; }
+.node-g.highlight rect { stroke-width: 2px; }
+.edge { transition: opacity .25s, stroke-width .2s; }
+.edge.dim { opacity: 0.18; }
+.edge.highlight { stroke-width: 2.2px; opacity: 1; }
+.detail-card { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px 16px; margin: 12px 0 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; min-height: 70px; transition: opacity .2s; }
+.detail-card .title { color: var(--color-text-primary); font-weight: 500; font-size: 14px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+.detail-card .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.pill-ours { background: #EEEDFE; color: #3C3489; }
+.pill-theirs { background: #FAEEDA; color: #854F0B; }
+.pill-external { background: #F1EFE8; color: #444441; }
+@media (prefers-color-scheme: dark) {
+  .pill-ours { background: #3C3489; color: #CECBF6; }
+  .pill-theirs { background: #854F0B; color: #FAC775; }
+  .pill-external { background: #444441; color: #D3D1C7; }
+}
+.step-controls { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; }
+.step-counter { font-size: 13px; color: var(--color-text-secondary); min-width: 60px; }
+.step-list { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 12px; }
+.step-dot { width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); font-size: 11px; cursor: pointer; color: var(--color-text-secondary); display: inline-flex; align-items: center; justify-content: center; padding: 0; font-family: inherit; }
+.step-dot.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+.step-dot.visited { background: var(--color-background-secondary); }
+.step-narration { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px 16px; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); min-height: 80px; }
+.step-narration .who { font-size: 11px; text-transform: lowercase; letter-spacing: 0.02em; margin-bottom: 6px; }
+.step-narration .what { color: var(--color-text-primary); font-weight: 500; margin-bottom: 4px; }
+.lens-btn { background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 6px 12px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; font-family: inherit; }
+.lens-btn:hover { background: var(--color-background-secondary); }
+.lens-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-secondary); }
+.lens-row { display: flex; gap: 6px; margin: 0 0 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Volume Docs chat bot architecture</h1>
+<p class="subtitle">The orchestrator is our code. Claude is one of the things it calls.</p>
+
+<h2 class="sr-only">Interactive architecture diagram of the Volume Docs chat bot, showing the boundary between Volume's orchestrator code and the external Claude API, with a step-through journey of a single user message.</h2>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="map">Architecture map</button>
+  <button class="tab" data-tab="journey">Message journey</button>
+  <button class="tab" data-tab="tools">Tools registry</button>
+</div>
+
+<div class="panel active" id="panel-map">
+  <div class="legend">
+    <span class="sw"><span class="dot" style="background:#CECBF6"></span>Our code (orchestrator + tools)</span>
+    <span class="sw"><span class="dot" style="background:#FAC775"></span>Claude (Anthropic, external)</span>
+    <span class="sw"><span class="dot" style="background:#D3D1C7"></span>External services / persistence</span>
+  </div>
+
+  <div class="lens-row">
+    <span style="font-size:12px;color:var(--color-text-secondary);align-self:center;margin-right:4px;">Highlight:</span>
+    <button class="lens-btn active" data-lens="all">Everything</button>
+    <button class="lens-btn" data-lens="ours">Our code only</button>
+    <button class="lens-btn" data-lens="claude">Claude boundary</button>
+    <button class="lens-btn" data-lens="external">External services</button>
+  </div>
+
+  <svg id="arch" width="100%" viewBox="0 0 680 760" role="img" xmlns="http://www.w3.org/2000/svg">
+    <title>Volume Docs chat bot architecture</title>
+    <desc>Widget posts to a route layer; small-talk fast path short-circuits trivial messages; otherwise the orchestrator runs a loop calling Claude and dispatching tools. Persistence and external services sit alongside.</desc>
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <g class="node-g" data-node="widget" data-cat="external">
+      <rect x="220" y="20" width="240" height="56" rx="8" class="c-gray" stroke-width="0.5"/>
+      <text class="th" x="340" y="40" text-anchor="middle" dominant-baseline="central">Widget</text>
+      <text class="ts" x="340" y="60" text-anchor="middle" dominant-baseline="central">End-user browser</text>
+    </g>
+
+    <line class="edge" x1="340" y1="76" x2="340" y2="106" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow)"/>
+    <text class="ts" x="350" y="93" dominant-baseline="central">HTTPS · POST /turns · SSE back</text>
+
+    <g class="node-g" data-node="route" data-cat="ours">
+      <rect x="220" y="116" width="240" height="56" rx="8" class="c-blue" stroke-width="0.5"/>
+      <text class="th" x="340" y="136" text-anchor="middle" dominant-baseline="central">Route layer</text>
+      <text class="ts" x="340" y="156" text-anchor="middle" dominant-baseline="central">routes/widget-chat.ts</text>
+    </g>
+
+    <line class="edge" x1="340" y1="172" x2="340" y2="202" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <g class="node-g" data-node="smalltalk" data-cat="ours">
+      <rect x="220" y="212" width="240" height="56" rx="8" class="c-blue" stroke-width="0.5"/>
+      <text class="th" x="340" y="232" text-anchor="middle" dominant-baseline="central">Small-talk fast path</text>
+      <text class="ts" x="340" y="252" text-anchor="middle" dominant-baseline="central">classifySmallTalk()</text>
+    </g>
+
+    <line class="edge" x1="340" y1="268" x2="340" y2="298" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow)"/>
+    <text class="ts" x="350" y="285" dominant-baseline="central">else</text>
+
+    <rect x="30" y="306" width="620" height="290" rx="14" fill="none" stroke="#534AB7" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text class="th" x="46" y="326" dominant-baseline="central" fill="#3C3489">★ Orchestrator</text>
+    <text class="ts" x="46" y="344" dominant-baseline="central" fill="#534AB7">runChatTurn() · lib/chat/chat.ts · our ECS · ~250 lines</text>
+
+    <g class="node-g" data-node="orch-send" data-cat="ours">
+      <rect x="60" y="364" width="220" height="56" rx="8" class="c-purple" stroke-width="0.5"/>
+      <text class="th" x="170" y="384" text-anchor="middle" dominant-baseline="central">1. Send conversation</text>
+      <text class="ts" x="170" y="404" text-anchor="middle" dominant-baseline="central">+ tools, history, system</text>
+    </g>
+
+    <line class="edge edge-to-claude" x1="280" y1="392" x2="396" y2="392" stroke="#534AB7" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <g class="node-g" data-node="claude" data-cat="claude">
+      <rect x="400" y="364" width="220" height="56" rx="8" class="c-amber" stroke-width="0.5"/>
+      <text class="th" x="510" y="384" text-anchor="middle" dominant-baseline="central">★ Claude</text>
+      <text class="ts" x="510" y="404" text-anchor="middle" dominant-baseline="central">Anthropic API · external</text>
+    </g>
+
+    <g class="node-g" data-node="orch-recv" data-cat="ours">
+      <rect x="400" y="440" width="220" height="56" rx="8" class="c-purple" stroke-width="0.5"/>
+      <text class="th" x="510" y="460" text-anchor="middle" dominant-baseline="central">2. Claude responds</text>
+      <text class="ts" x="510" y="480" text-anchor="middle" dominant-baseline="central">tool_use or final text</text>
+    </g>
+
+    <line class="edge" x1="510" y1="420" x2="510" y2="436" stroke="#534AB7" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <g class="node-g" data-node="orch-dispatch" data-cat="ours">
+      <rect x="60" y="440" width="220" height="56" rx="8" class="c-purple" stroke-width="0.5"/>
+      <text class="th" x="170" y="460" text-anchor="middle" dominant-baseline="central">3. Dispatch or exit</text>
+      <text class="ts" x="170" y="480" text-anchor="middle" dominant-baseline="central">tool call → run; else exit</text>
+    </g>
+
+    <line class="edge" x1="396" y1="468" x2="284" y2="468" stroke="#534AB7" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+    <path class="edge" d="M 60 468 L 40 468 L 40 392 L 56 392" fill="none" stroke="#534AB7" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text class="ts" x="44" y="430" dominant-baseline="central" fill="#534AB7">↻ loop · max 4 rounds</text>
+
+    <g class="node-g" data-node="orch-finalize" data-cat="ours">
+      <rect x="60" y="516" width="560" height="60" rx="8" class="c-purple" stroke-width="0.5"/>
+      <text class="th" x="340" y="538" text-anchor="middle" dominant-baseline="central">On exit: citation guard → write to DB → close SSE</text>
+      <text class="ts" x="340" y="558" text-anchor="middle" dominant-baseline="central">assistant message + token usage persisted</text>
+    </g>
+
+    <line class="edge" x1="340" y1="596" x2="340" y2="624" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow)"/>
+    <text class="ts" x="350" y="612" dominant-baseline="central">per tool_use block</text>
+
+    <rect x="30" y="630" width="620" height="100" rx="14" fill="none" stroke="#0F6E56" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text class="th" x="46" y="650" dominant-baseline="central" fill="#085041">★ Tools (our ECS)</text>
+
+    <g class="node-g" data-node="tool-search" data-cat="ours">
+      <rect x="46" y="664" width="140" height="50" rx="6" class="c-teal" stroke-width="0.5"/>
+      <text class="th" x="116" y="682" text-anchor="middle" dominant-baseline="central">search_help</text>
+      <text class="ts" x="116" y="700" text-anchor="middle" dominant-baseline="central">pgvector + RRF</text>
+    </g>
+    <g class="node-g" data-node="tool-create" data-cat="ours">
+      <rect x="196" y="664" width="140" height="50" rx="6" class="c-teal" stroke-width="0.5"/>
+      <text class="th" x="266" y="682" text-anchor="middle" dominant-baseline="central">create_ticket</text>
+      <text class="ts" x="266" y="700" text-anchor="middle" dominant-baseline="central">Jira REST</text>
+    </g>
+    <g class="node-g" data-node="tool-lookup" data-cat="ours">
+      <rect x="346" y="664" width="140" height="50" rx="6" class="c-teal" stroke-width="0.5"/>
+      <text class="th" x="416" y="682" text-anchor="middle" dominant-baseline="central">lookup_ticket</text>
+      <text class="ts" x="416" y="700" text-anchor="middle" dominant-baseline="central">Jira + 5min cache</text>
+    </g>
+    <g class="node-g" data-node="tool-query" data-cat="ours">
+      <rect x="496" y="664" width="140" height="50" rx="6" class="c-gray" stroke-width="0.5" stroke-dasharray="3 3"/>
+      <text class="th" x="566" y="682" text-anchor="middle" dominant-baseline="central">query_external</text>
+      <text class="ts" x="566" y="700" text-anchor="middle" dominant-baseline="central">dormant</text>
+    </g>
+  </svg>
+
+  <div class="detail-card" id="detail">
+    <div class="title"><span>Click any box to inspect it</span></div>
+    <div class="body">Hover to preview, click to lock in. The lens buttons above dim everything that doesn't belong to that view — the Claude-boundary lens shows exactly which arrow crosses to Anthropic's infrastructure.</div>
+  </div>
+</div>
+
+<div class="panel" id="panel-journey">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin:0 0 8px;">Following one message: <span style="color:var(--color-text-primary);font-weight:500;">"how do I invite a user?"</span></div>
+
+  <svg id="arch2" width="100%" viewBox="0 0 680 540" role="img" xmlns="http://www.w3.org/2000/svg">
+    <title>Message journey visualization</title>
+    <desc>A simplified version of the architecture with a packet that travels along the path of a single message.</desc>
+    <defs>
+      <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <g id="j-widget"><rect x="240" y="20" width="200" height="44" rx="8" class="c-gray" stroke-width="0.5"/><text class="th" x="340" y="42" text-anchor="middle" dominant-baseline="central">Widget</text></g>
+    <line class="edge" x1="340" y1="64" x2="340" y2="86" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow2)"/>
+    <g id="j-route"><rect x="240" y="92" width="200" height="44" rx="8" class="c-blue" stroke-width="0.5"/><text class="th" x="340" y="114" text-anchor="middle" dominant-baseline="central">Route layer</text></g>
+    <line class="edge" x1="340" y1="136" x2="340" y2="158" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow2)"/>
+    <g id="j-smalltalk"><rect x="240" y="164" width="200" height="44" rx="8" class="c-blue" stroke-width="0.5"/><text class="th" x="340" y="186" text-anchor="middle" dominant-baseline="central">Small-talk classifier</text></g>
+    <line class="edge" x1="340" y1="208" x2="340" y2="230" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow2)"/>
+
+    <rect x="40" y="240" width="600" height="200" rx="12" fill="none" stroke="#534AB7" stroke-width="1" stroke-dasharray="4 3"/>
+    <text class="ts" x="56" y="258" fill="#534AB7" dominant-baseline="central">Orchestrator (our ECS)</text>
+
+    <g id="j-orch"><rect x="80" y="276" width="200" height="50" rx="8" class="c-purple" stroke-width="0.5"/><text class="th" x="180" y="294" text-anchor="middle" dominant-baseline="central">runChatTurn()</text><text class="ts" x="180" y="312" text-anchor="middle" dominant-baseline="central">loop controller</text></g>
+    <g id="j-claude"><rect x="400" y="276" width="200" height="50" rx="8" class="c-amber" stroke-width="0.5"/><text class="th" x="500" y="294" text-anchor="middle" dominant-baseline="central">Claude</text><text class="ts" x="500" y="312" text-anchor="middle" dominant-baseline="central">Anthropic API</text></g>
+
+    <line class="edge" x1="280" y1="301" x2="396" y2="301" stroke="#534AB7" stroke-width="1.2" marker-end="url(#arrow2)" id="edge-up"/>
+    <line class="edge" x1="400" y1="318" x2="284" y2="318" stroke="#BA7517" stroke-width="1.2" marker-end="url(#arrow2)" id="edge-down"/>
+
+    <g id="j-tool"><rect x="180" y="360" width="200" height="50" rx="8" class="c-teal" stroke-width="0.5"/><text class="th" x="280" y="378" text-anchor="middle" dominant-baseline="central">search_help_articles</text><text class="ts" x="280" y="396" text-anchor="middle" dominant-baseline="central">retrieval pipeline</text></g>
+    <line class="edge" x1="180" y1="326" x2="220" y2="356" stroke="#0F6E56" stroke-width="1.2" marker-end="url(#arrow2)"/>
+    <line class="edge" x1="240" y1="356" x2="200" y2="326" stroke="#0F6E56" stroke-width="1.2" marker-end="url(#arrow2)"/>
+
+    <g id="j-db"><rect x="420" y="360" width="180" height="50" rx="8" class="c-gray" stroke-width="0.5"/><text class="th" x="510" y="378" text-anchor="middle" dominant-baseline="central">RDS Postgres</text><text class="ts" x="510" y="396" text-anchor="middle" dominant-baseline="central">pgvector + tables</text></g>
+    <line class="edge" x1="380" y1="385" x2="416" y2="385" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow2)"/>
+
+    <g id="j-back"><rect x="240" y="460" width="200" height="44" rx="8" class="c-gray" stroke-width="0.5"/><text class="th" x="340" y="482" text-anchor="middle" dominant-baseline="central">SSE → widget</text></g>
+    <line class="edge" x1="180" y1="326" x2="180" y2="450" stroke="var(--t)" stroke-width="0.5" stroke-dasharray="3 3"/>
+    <line class="edge" x1="180" y1="482" x2="236" y2="482" stroke="var(--t)" stroke-width="1" marker-end="url(#arrow2)"/>
+
+    <circle id="j-packet" cx="340" cy="42" r="8" fill="#534AB7" opacity="0"/>
+    <text id="j-packet-label" x="340" y="46" text-anchor="middle" dominant-baseline="central" fill="white" font-size="9" font-weight="500" opacity="0" pointer-events="none">Q</text>
+  </svg>
+
+  <div class="step-controls">
+    <button class="lens-btn" id="step-prev">← Prev</button>
+    <button class="lens-btn" id="step-play"><i class="ti ti-player-play" aria-hidden="true"></i> Play</button>
+    <button class="lens-btn" id="step-next">Next →</button>
+    <span class="step-counter" id="step-counter">Step 1 / 8</span>
+  </div>
+  <div class="step-list" id="step-list"></div>
+  <div class="step-narration" id="step-narration"></div>
+</div>
+
+<div class="panel" id="panel-tools">
+  <div style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px;">Each tool is just a function with a JSON schema. Claude picks one and supplies arguments; our orchestrator runs it and feeds the result back.</div>
+  <div id="tools-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;"></div>
+</div>
+
+</div>
+
+<script>
+const NODE_DETAILS = {
+  widget: { cat: 'external', title: 'Widget', loc: 'packages/widget · end-user browser', does: 'Opens SSE stream, posts user questions over HTTPS, renders streamed token deltas live into the chat bubble.', not: 'Has zero AI logic. Does not call Claude. Does not search articles. Transport-layer thin client only.' },
+  route: { cat: 'ours', title: 'Route layer', loc: 'routes/widget-chat.ts · our ECS', does: 'Validates site public key, verifies identify JWT, enforces 20 turns / 60s per-IP rate limit, Zod-validates body, looks up or creates session, hands off to orchestrator.', not: 'Does not call Claude. Does not own conversation logic. Just routes the request and shapes the SSE response.' },
+  smalltalk: { cat: 'ours', title: 'Small-talk fast path', loc: 'classifySmallTalk() · pure JS, no AI', does: 'Pattern-matches against hard-coded pools (greetings, thanks, identity). On hit: returns canned reply, persists turn as ok, short-circuits the stack. Zero AI cost.', not: 'Handles nothing substantive. Exists to keep "thanks" from burning a Claude call. Falls through to the orchestrator otherwise.' },
+  'orch-send': { cat: 'ours', title: 'Send to Claude', loc: 'runChatTurn() · loop iteration', does: 'Builds per-turn context (recent history, recent tickets, JWT identity), packages tools registry, opens streaming Anthropic call. Round 0 uses tool_choice: any to force a tool.', not: 'Does not decide what tools to use — it just makes them available. Claude picks.' },
+  claude: { cat: 'claude', title: '★ Claude (claude-sonnet-4-6)', loc: 'api.anthropic.com · not our code, not our infra', does: 'Receives system prompt, conversation, tools, and any prior tool_results. Emits either a tool_use block ("call X with input Y") or final answer text, or both. Streams tokens back over SSE.', not: 'Cannot access our DB. Cannot make HTTP calls. Cannot read files or run code. Its only handle into our world is emitting tool_use blocks — and only the orchestrator can act on them.' },
+  'orch-recv': { cat: 'ours', title: 'Receive response', loc: 'runChatTurn() · per-iteration', does: 'Parses content blocks: text blocks stream straight to the widget; tool_use blocks queue for dispatch. Tracks token usage.', not: 'Does not interpret tool inputs — passes them verbatim to the matching handler.' },
+  'orch-dispatch': { cat: 'ours', title: 'Dispatch or exit', loc: 'runChatTurn() · loop tail', does: 'If Claude returned a tool_use block, looks up the handler and runs it. If only text and the loop is satisfied, exits to finalize. Capped at 4 rounds.', not: 'Could in principle refuse a tool call if the name does not exist. Has no opinion on whether the answer is good.' },
+  'orch-finalize': { cat: 'ours', title: 'Finalize the turn', loc: 'runChatTurn() · post-loop', does: 'Citation guard checks for [N] markers (else flags as refusal). Persists assistant message, retrieval chunks, citations, token counts, finish reason. Writes ai_usage_events per round. Closes SSE.', not: 'Does not retry on bad answers. Quality is Claude\u2019s problem; bookkeeping is ours.' },
+  'tool-search': { cat: 'ours', title: 'search_help_articles', loc: 'lib/chat/retrieve.ts', does: 'Voyage-embeds the query, runs pgvector ANN + Postgres tsvector full-text in parallel, fuses rankings via RRF. Role gate filters by JWT role before scoring. Returns top-K chunks.', not: 'Does not decide WHEN to search or what to cite. That is Claude\u2019s call.' },
+  'tool-create': { cat: 'ours', title: 'create_support_ticket', loc: 'lib/chat/support-tickets.ts', does: 'Files a Jira issue. Strict propose → user-confirms → execute pattern so Claude can\u2019t silently create tickets.', not: 'Does not write to Jira without user confirmation. Confirmation step lives in the orchestrator + widget.' },
+  'tool-lookup': { cat: 'ours', title: 'lookup_support_ticket', loc: 'lib/chat/support-tickets.ts', does: 'Reads ticket status from Jira REST with a 5-minute cache to avoid hammering the API on repeated lookups.', not: 'Does not modify tickets. Read-only.' },
+  'tool-query': { cat: 'ours', title: 'query_external_api (dormant)', loc: 'wired but not registered', does: 'Designed to call a customer-configured HTTP endpoint. Code exists in the tools layer but is NOT in the orchestrator\u2019s registered tool list, so Claude can\u2019t see or invoke it today.', not: 'Currently does nothing. Lives in the repo as scaffolding for the next per-site integration.' },
+};
+
+const TOOLS = [
+  { id: 'search_help_articles', cat: 'active', what: 'Hybrid vector + lexical search over help articles.', pipe: 'pgvector ANN + Postgres tsvector → RRF fusion → role gate → top-K chunks', triggers: 'When Claude needs facts to answer a question.' },
+  { id: 'create_support_ticket', cat: 'active', what: 'File a Jira issue on the end-user\u2019s behalf.', pipe: 'Propose → user confirms in the widget → execute', triggers: 'When Claude decides the user needs human help.' },
+  { id: 'lookup_support_ticket', cat: 'active', what: 'Read current status of a Jira ticket.', pipe: 'Jira REST GET + 5-minute status cache', triggers: 'When the user asks about an existing ticket.' },
+  { id: 'query_external_api', cat: 'dormant', what: 'Call a customer-configured HTTP endpoint.', pipe: 'Wired in the codebase but NOT registered with Claude', triggers: 'Reserved for per-site integrations. Currently invisible to Claude.' },
+];
+
+const JOURNEY = [
+  { who: 'widget', what: 'User types "how do I invite a user?" and hits Send', who_label: 'browser', path: { from: 'j-widget', to: 'j-widget' } },
+  { who: 'widget → route', what: 'POST /v1/widget-chat/sessions/<id>/turns over HTTPS with SSE accept header', who_label: 'network', path: { from: 'j-widget', to: 'j-route' } },
+  { who: 'route', what: 'Validates public key, checks rate limit, opens SSE stream, hands off to orchestrator', who_label: 'our ECS', path: { from: 'j-route', to: 'j-smalltalk' } },
+  { who: 'small-talk classifier', what: 'Six words, contains "how" — not small talk. Falls through.', who_label: 'our ECS · pure JS', path: { from: 'j-smalltalk', to: 'j-orch' } },
+  { who: 'orchestrator → Claude', what: 'Round 0: sends history + tools + tool_choice: any. Forces Claude to call a tool.', who_label: 'HTTPS to Anthropic', path: { from: 'j-orch', to: 'j-claude' }, label: 'Q' },
+  { who: 'Claude', what: 'Decides: "I should search help articles." Emits tool_use { name: search_help_articles, input: { query: "invite user" } }', who_label: 'Anthropic infra', path: { from: 'j-claude', to: 'j-orch' }, label: 'T' },
+  { who: 'orchestrator → tool', what: 'Dispatches to search_help_articles handler. Retrieval pipeline runs against pgvector + Postgres FTS.', who_label: 'our ECS + RDS', path: { from: 'j-orch', to: 'j-tool' } },
+  { who: 'tool → Claude (round 1)', what: 'Packages 8 chunks as tool_result. Calls Claude again. Claude writes final answer with [1] citation. Streams tokens to widget.', who_label: 'HTTPS to Anthropic', path: { from: 'j-tool', to: 'j-back' }, label: 'A' },
+];
+
+const cats = {
+  ours: { pill: 'pill-ours', label: 'our code' },
+  claude: { pill: 'pill-theirs', label: 'Anthropic' },
+  external: { pill: 'pill-external', label: 'external' },
+};
+
+const detail = document.getElementById('detail');
+function showDetail(id) {
+  const d = NODE_DETAILS[id];
+  if (!d) return;
+  const cat = cats[d.cat];
+  detail.innerHTML = `
+    <div class="title"><span>${d.title}</span><span class="pill ${cat.pill}">${cat.label}</span></div>
+    <div class="body" style="margin-top:6px;"><div style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:8px;">${d.loc}</div><div style="margin-bottom:6px;"><span style="color:var(--color-text-primary);font-weight:500;">Does:</span> ${d.does}</div><div><span style="color:var(--color-text-primary);font-weight:500;">Does NOT:</span> ${d.not}</div></div>
+  `;
+}
+
+document.querySelectorAll('.node-g').forEach(g => {
+  g.addEventListener('mouseenter', () => showDetail(g.dataset.node));
+  g.addEventListener('click', () => {
+    document.querySelectorAll('.node-g').forEach(n => n.classList.remove('highlight'));
+    g.classList.add('highlight');
+    showDetail(g.dataset.node);
+  });
+});
+
+document.querySelectorAll('.lens-btn[data-lens]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lens-btn[data-lens]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const lens = btn.dataset.lens;
+    document.querySelectorAll('.node-g').forEach(g => {
+      g.classList.remove('dim');
+      if (lens === 'all') return;
+      if (lens === 'ours' && g.dataset.cat !== 'ours') g.classList.add('dim');
+      if (lens === 'claude' && g.dataset.cat !== 'claude' && g.dataset.node !== 'orch-send' && g.dataset.node !== 'orch-recv') g.classList.add('dim');
+      if (lens === 'external' && g.dataset.cat !== 'external' && g.dataset.cat !== 'claude') g.classList.add('dim');
+    });
+    document.querySelectorAll('.edge').forEach(e => {
+      e.classList.remove('highlight', 'dim');
+      if (lens === 'claude' && e.classList.contains('edge-to-claude')) e.classList.add('highlight');
+    });
+  });
+});
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+const toolsGrid = document.getElementById('tools-grid');
+TOOLS.forEach(tool => {
+  const dormant = tool.cat === 'dormant';
+  const card = document.createElement('div');
+  card.style.cssText = `background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px; ${dormant ? 'opacity: 0.65; border: 0.5px dashed var(--color-border-secondary);' : ''}`;
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <code style="font-family:var(--font-mono);font-size:13px;color:var(--color-text-primary);font-weight:500;">${tool.id}</code>
+      <span class="pill ${dormant ? 'pill-external' : 'pill-ours'}" style="font-size:11px;padding:2px 8px;border-radius:10px;">${dormant ? 'dormant' : 'active'}</span>
+    </div>
+    <div style="font-size:13px;color:var(--color-text-primary);margin-bottom:8px;">${tool.what}</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;"><span style="color:var(--color-text-tertiary);">pipeline · </span>${tool.pipe}</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);"><span style="color:var(--color-text-tertiary);">when · </span>${tool.triggers}</div>
+  `;
+  toolsGrid.appendChild(card);
+});
+
+let stepIdx = 0;
+let playTimer = null;
+const counter = document.getElementById('step-counter');
+const narration = document.getElementById('step-narration');
+const list = document.getElementById('step-list');
+const packet = document.getElementById('j-packet');
+const packetLabel = document.getElementById('j-packet-label');
+
+JOURNEY.forEach((s, i) => {
+  const dot = document.createElement('button');
+  dot.className = 'step-dot';
+  dot.textContent = i + 1;
+  dot.onclick = () => goTo(i);
+  list.appendChild(dot);
+});
+
+function nodeCenter(id) {
+  const el = document.querySelector(`#${id} rect`);
+  if (!el) return { x: 340, y: 200 };
+  const x = parseFloat(el.getAttribute('x')) + parseFloat(el.getAttribute('width')) / 2;
+  const y = parseFloat(el.getAttribute('y')) + parseFloat(el.getAttribute('height')) / 2;
+  return { x, y };
+}
+
+function goTo(i) {
+  stepIdx = i;
+  const s = JOURNEY[i];
+  counter.textContent = `Step ${i + 1} / ${JOURNEY.length}`;
+  narration.innerHTML = `<div class="who" style="color:var(--color-text-tertiary);">${s.who_label}</div><div class="what">${s.who}</div><div>${s.what}</div>`;
+  document.querySelectorAll('.step-dot').forEach((d, idx) => {
+    d.classList.toggle('active', idx === i);
+    d.classList.toggle('visited', idx < i);
+  });
+  const from = nodeCenter(s.path.from);
+  const to = nodeCenter(s.path.to);
+  packet.style.opacity = 0;
+  packetLabel.style.opacity = 0;
+  packet.setAttribute('cx', from.x);
+  packet.setAttribute('cy', from.y);
+  packetLabel.setAttribute('x', from.x);
+  packetLabel.setAttribute('y', from.y + 3);
+  if (s.label) packetLabel.textContent = s.label;
+  requestAnimationFrame(() => {
+    packet.style.transition = 'cx 0.7s ease-in-out, cy 0.7s ease-in-out, opacity 0.3s';
+    packetLabel.style.transition = 'x 0.7s ease-in-out, y 0.7s ease-in-out, opacity 0.3s';
+    packet.style.opacity = 1;
+    packetLabel.style.opacity = s.label ? 1 : 0;
+    setTimeout(() => {
+      packet.setAttribute('cx', to.x);
+      packet.setAttribute('cy', to.y);
+      packetLabel.setAttribute('x', to.x);
+      packetLabel.setAttribute('y', to.y + 3);
+    }, 50);
+  });
+}
+
+document.getElementById('step-prev').onclick = () => { stopPlay(); goTo(Math.max(0, stepIdx - 1)); };
+document.getElementById('step-next').onclick = () => { stopPlay(); goTo(Math.min(JOURNEY.length - 1, stepIdx + 1)); };
+
+const playBtn = document.getElementById('step-play');
+function stopPlay() {
+  if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  playBtn.innerHTML = '<i class="ti ti-player-play" aria-hidden="true"></i> Play';
+}
+playBtn.onclick = () => {
+  if (playTimer) { stopPlay(); return; }
+  playBtn.innerHTML = '<i class="ti ti-player-pause" aria-hidden="true"></i> Pause';
+  if (stepIdx >= JOURNEY.length - 1) stepIdx = -1;
+  playTimer = setInterval(() => {
+    if (stepIdx >= JOURNEY.length - 1) { stopPlay(); return; }
+    goTo(stepIdx + 1);
+  }, 2200);
+  goTo(stepIdx + 1);
+};
+
+goTo(0);
+</script>
+</body>
+</html>
