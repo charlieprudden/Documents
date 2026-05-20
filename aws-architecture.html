@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volume Docs — AWS architecture</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4ef;
+  --color-background-tertiary: #faf9f5;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #5f5e5a;
+  --color-text-tertiary: #888780;
+  --color-border-tertiary: rgba(60,60,55,0.15);
+  --color-border-secondary: rgba(60,60,55,0.3);
+  --color-border-primary: rgba(60,60,55,0.4);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --t: #5f5e5a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #1a1a18;
+    --color-background-secondary: #2c2c2a;
+    --color-background-tertiary: #131311;
+    --color-text-primary: #f5f4ef;
+    --color-text-secondary: #b4b2a9;
+    --color-text-tertiary: #888780;
+    --color-border-tertiary: rgba(245,244,239,0.15);
+    --color-border-secondary: rgba(245,244,239,0.3);
+    --color-border-primary: rgba(245,244,239,0.4);
+    --t: #b4b2a9;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+.container {
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--color-background-primary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--color-border-tertiary);
+  padding: 1.5rem 2rem 2rem;
+}
+h1 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin: 0 0 1.5rem;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+text { font-family: var(--font-sans); fill: var(--color-text-primary); }
+.t { font-size: 14px; }
+.ts { font-size: 12px; fill: var(--color-text-secondary); }
+.th { font-size: 14px; font-weight: 500; }
+rect.c-blue, .c-blue > rect { fill: #E6F1FB; stroke: #185FA5; }
+.c-blue > text.th, .c-blue > text.t { fill: #0C447C; }
+.c-blue > text.ts { fill: #185FA5; }
+rect.c-purple, .c-purple > rect { fill: #EEEDFE; stroke: #534AB7; }
+.c-purple > text.th, .c-purple > text.t { fill: #3C3489; }
+.c-purple > text.ts { fill: #534AB7; }
+rect.c-amber, .c-amber > rect { fill: #FAEEDA; stroke: #BA7517; }
+.c-amber > text.th, .c-amber > text.t { fill: #633806; }
+.c-amber > text.ts { fill: #854F0B; }
+rect.c-teal, .c-teal > rect { fill: #E1F5EE; stroke: #0F6E56; }
+.c-teal > text.th, .c-teal > text.t { fill: #085041; }
+.c-teal > text.ts { fill: #0F6E56; }
+rect.c-gray, .c-gray > rect { fill: #F1EFE8; stroke: #5F5E5A; }
+.c-gray > text.th, .c-gray > text.t { fill: #444441; }
+.c-gray > text.ts { fill: #5F5E5A; }
+rect.c-green, .c-green > rect { fill: #EAF3DE; stroke: #3B6D11; }
+.c-green > text.th, .c-green > text.t { fill: #27500A; }
+.c-green > text.ts { fill: #3B6D11; }
+rect.c-coral, .c-coral > rect { fill: #FAECE7; stroke: #993C1D; }
+.c-coral > text.th, .c-coral > text.t { fill: #712B13; }
+.c-coral > text.ts { fill: #993C1D; }
+@media (prefers-color-scheme: dark) {
+  rect.c-blue, .c-blue > rect { fill: #0C447C; stroke: #85B7EB; }
+  .c-blue > text.th, .c-blue > text.t { fill: #B5D4F4; }
+  .c-blue > text.ts { fill: #85B7EB; }
+  rect.c-purple, .c-purple > rect { fill: #3C3489; stroke: #AFA9EC; }
+  .c-purple > text.th, .c-purple > text.t { fill: #CECBF6; }
+  .c-purple > text.ts { fill: #AFA9EC; }
+  rect.c-amber, .c-amber > rect { fill: #633806; stroke: #EF9F27; }
+  .c-amber > text.th, .c-amber > text.t { fill: #FAC775; }
+  .c-amber > text.ts { fill: #EF9F27; }
+  rect.c-teal, .c-teal > rect { fill: #085041; stroke: #5DCAA5; }
+  .c-teal > text.th, .c-teal > text.t { fill: #9FE1CB; }
+  .c-teal > text.ts { fill: #5DCAA5; }
+  rect.c-gray, .c-gray > rect { fill: #444441; stroke: #B4B2A9; }
+  .c-gray > text.th, .c-gray > text.t { fill: #D3D1C7; }
+  .c-gray > text.ts { fill: #B4B2A9; }
+  rect.c-green, .c-green > rect { fill: #27500A; stroke: #97C459; }
+  .c-green > text.th, .c-green > text.t { fill: #C0DD97; }
+  .c-green > text.ts { fill: #97C459; }
+  rect.c-coral, .c-coral > rect { fill: #712B13; stroke: #F0997B; }
+  .c-coral > text.th, .c-coral > text.t { fill: #F5C4B3; }
+  .c-coral > text.ts { fill: #F0997B; }
+}
+.tabs { display: flex; gap: 4px; margin: 0 0 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.tab { background: transparent; border: none; padding: 8px 14px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.tab:hover:not(.active) { color: var(--color-text-primary); }
+.panel { display: none; }
+.panel.active { display: block; }
+.state-toggle { display: inline-flex; background: var(--color-background-secondary); border-radius: 999px; padding: 3px; margin: 0 0 14px; }
+.state-toggle button { background: transparent; border: none; padding: 6px 16px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; border-radius: 999px; font-family: inherit; transition: background 0.2s, color 0.2s; }
+.state-toggle button.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 14px; font-size: 12px; color: var(--color-text-secondary); align-items: center; }
+.legend .sw { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 10px; height: 10px; border-radius: 3px; }
+.node-g rect { transition: opacity .25s, stroke-width .2s, filter .25s; cursor: pointer; }
+.node-g:hover rect { stroke-width: 1.5px; }
+.node-g.highlight rect { stroke-width: 2.5px; }
+.node-g.new rect { stroke-dasharray: 5 3; }
+.node-g .badge-new { opacity: 0; transition: opacity 0.25s; }
+.node-g.new .badge-new { opacity: 1; }
+.diff-on .node-g.new rect { stroke-width: 2px; }
+.diff-on .node-g:not(.new) { opacity: 0.45; }
+.edge { transition: opacity .25s; }
+.diff-on .edge.not-new { opacity: 0.3; }
+.detail-card { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 14px 16px; margin: 12px 0 0; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; min-height: 80px; }
+.detail-card .title { color: var(--color-text-primary); font-weight: 500; font-size: 14px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detail-card .pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.pill-new { background: #EAF3DE; color: #27500A; }
+.pill-existing { background: #F1EFE8; color: #444441; }
+.pill-changed { background: #FAEEDA; color: #854F0B; }
+.pill-removed { background: #FAECE7; color: #712B13; }
+@media (prefers-color-scheme: dark) {
+  .pill-new { background: #27500A; color: #C0DD97; }
+  .pill-existing { background: #444441; color: #D3D1C7; }
+  .pill-changed { background: #854F0B; color: #FAC775; }
+  .pill-removed { background: #712B13; color: #F5C4B3; }
+}
+.toggle-row { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; flex-wrap: wrap; }
+.diff-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; user-select: none; }
+.diff-toggle input { width: 32px; height: 18px; appearance: none; background: var(--color-border-secondary); border-radius: 9px; position: relative; cursor: pointer; transition: background 0.2s; outline: none; }
+.diff-toggle input:checked { background: #534AB7; }
+.diff-toggle input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform 0.2s; }
+.diff-toggle input:checked::after { transform: translateX(14px); }
+.migration-list { list-style: none; padding: 0; margin: 0; counter-reset: step; }
+.migration-step { display: flex; gap: 14px; padding: 14px 16px; background: var(--color-background-secondary); border-radius: var(--border-radius-lg); margin-bottom: 8px; cursor: pointer; transition: background 0.18s, transform 0.18s; }
+.migration-step:hover { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); padding: 13.5px 15.5px; }
+.migration-step .num { width: 28px; height: 28px; border-radius: 50%; background: #534AB7; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+.migration-step .body { flex: 1; }
+.migration-step .body h3 { font-size: 14px; font-weight: 500; margin: 0 0 4px; color: var(--color-text-primary); }
+.migration-step .body p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 4px; }
+.migration-step .body .why { font-size: 12px; color: var(--color-text-tertiary); }
+.migration-step .effort { font-size: 11px; padding: 2px 8px; border-radius: 10px; align-self: flex-start; margin-left: auto; flex-shrink: 0; }
+.effort-low { background: #EAF3DE; color: #27500A; }
+.effort-med { background: #FAEEDA; color: #854F0B; }
+.effort-high { background: #FAECE7; color: #712B13; }
+@media (prefers-color-scheme: dark) {
+  .effort-low { background: #27500A; color: #C0DD97; }
+  .effort-med { background: #854F0B; color: #FAC775; }
+  .effort-high { background: #712B13; color: #F5C4B3; }
+}
+.cost-table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 13px; }
+.cost-table th { text-align: left; padding: 10px 12px; font-weight: 500; color: var(--color-text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 0.5px solid var(--color-border-secondary); }
+.cost-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.cost-table tr:last-child td { border-bottom: none; font-weight: 500; background: var(--color-background-secondary); }
+.cost-table td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; }
+.bottleneck { padding: 12px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); border-left: 3px solid #D85A30; margin-bottom: 8px; }
+.bottleneck h4 { font-size: 13px; font-weight: 500; margin: 0 0 4px; color: var(--color-text-primary); }
+.bottleneck p { font-size: 12px; color: var(--color-text-secondary); margin: 0; }
+.section-h { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin: 20px 0 10px; }
+.summary-text { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>AWS architecture</h1>
+<p class="subtitle">From single-task POC to 10-customer production. Toggle between states to see the diff.</p>
+
+<h2 class="sr-only">Interactive AWS architecture diagram showing Volume Docs' current POC topology and the target topology sized for ten paying customers, with a toggle to highlight changes between the two and a migration sequencing tab.</h2>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="topology">Topology</button>
+  <button class="tab" data-tab="migration">Migration plan</button>
+  <button class="tab" data-tab="cost">Cost</button>
+</div>
+
+<div class="panel active" id="panel-topology">
+  <div class="toggle-row">
+    <div class="state-toggle">
+      <button class="active" data-state="current">Current (POC)</button>
+      <button data-state="future">Future (10 customers)</button>
+    </div>
+    <label class="diff-toggle" id="diff-label" style="display:none">
+      <input type="checkbox" id="diff-toggle">
+      <span>Highlight what's new</span>
+    </label>
+  </div>
+
+  <div id="state-summary" class="summary-text"></div>
+
+  <div class="legend">
+    <span class="sw"><span class="dot" style="background:#B5D4F4"></span>Edge / frontend</span>
+    <span class="sw"><span class="dot" style="background:#CECBF6"></span>Compute</span>
+    <span class="sw"><span class="dot" style="background:#9FE1CB"></span>Data / cache / queue</span>
+    <span class="sw"><span class="dot" style="background:#FAC775"></span>External services</span>
+    <span class="sw"><span class="dot" style="background:#D3D1C7"></span>Security / ops</span>
+  </div>
+
+  <svg id="diagram" width="100%" viewBox="0 0 880 700" role="img" xmlns="http://www.w3.org/2000/svg">
+    <title>AWS topology diagram</title>
+    <desc>Architectural components for Volume Docs, switchable between current POC and future production state.</desc>
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <g id="diagram-content"></g>
+
+    <text id="hint" class="ts" x="440" y="680" text-anchor="middle" fill="#888780">Click any component to see details</text>
+  </svg>
+
+  <div class="detail-card" id="detail">
+    <div class="title"><span>Click any component</span></div>
+    <div>Hover to preview, click to lock in. Toggle "Highlight what's new" in the future view to see exactly what changes from the POC.</div>
+  </div>
+</div>
+
+<div class="panel" id="panel-migration">
+  <p class="summary-text">Eight changes, ordered low-risk to high-value. Each step is independently shippable — you can stop after any of them and still be better off than the POC.</p>
+  <ol class="migration-list" id="migration-list"></ol>
+</div>
+
+<div class="panel" id="panel-cost">
+  <p class="summary-text">Eu-west-2, on-demand pricing, ~10 customers (200–500 admin users, 100k–500k widget MAU). Costs scale roughly linearly with active widget traffic; CloudFront and S3 transfer are the biggest variables.</p>
+  <table class="cost-table">
+    <thead>
+      <tr><th>Component</th><th>Monthly (GBP)</th></tr>
+    </thead>
+    <tbody id="cost-body"></tbody>
+  </table>
+  <h3 class="section-h">Why these numbers</h3>
+  <p class="summary-text">RDS is the dominant line item — Multi-AZ doubles instance cost, and the read replica adds a third instance. If RDS dominates beyond ~£250/mo, that's the signal to revisit instance sizing rather than over-engineer elsewhere.</p>
+  <p class="summary-text">Fargate is cheap at this scale because it scales down at night. Worker tasks especially — queues drain in minutes, then idle.</p>
+  <p class="summary-text">Aurora Serverless v2 is ~£40/mo more than RDS Multi-AZ for this profile but removes capacity-planning entirely. Worth revisiting at customer #20.</p>
+
+  <h3 class="section-h">What we deliberately don't pay for</h3>
+  <div class="bottleneck"><h4>Kubernetes / EKS</h4><p>~£70/mo for the control plane alone, plus ops overhead. Fargate is plenty for 10 customers.</p></div>
+  <div class="bottleneck"><h4>Multi-region</h4><p>Multi-AZ in eu-west-2 gives a 99.95% SLA. Multi-region is a 10× cost increase and an order-of-magnitude more complexity for the next 9 of a 9.</p></div>
+  <div class="bottleneck"><h4>Per-tenant database isolation</h4><p>Org-scoped queries with row-level filters are correct at this scale. Per-tenant physical databases multiply RDS spend and ops surface for no security benefit when the orchestrator already enforces the boundary.</p></div>
+</div>
+
+</div>
+
+<script>
+const NODES_CURRENT = [
+  { id: 'internet', x: 380, y: 20, w: 120, h: 32, color: 'gray', title: 'Internet', cat: 'edge' },
+  { id: 'route1', x: 80, y: 80, w: 200, h: 44, color: 'blue', title: 'volumedocs.co.uk', sub: 'admin + KB + marketing', cat: 'edge' },
+  { id: 'route2', x: 340, y: 80, w: 200, h: 44, color: 'blue', title: 'cdn.volumedocs.co.uk', sub: 'widget bundle', cat: 'edge' },
+  { id: 'route3', x: 600, y: 80, w: 200, h: 44, color: 'blue', title: 'api.volumedocs.co.uk', sub: 'API', cat: 'edge' },
+
+  { id: 'amplify1', x: 80, y: 160, w: 200, h: 56, color: 'blue', title: 'Amplify', sub: 'volume-docs-admin', cat: 'edge' },
+  { id: 'amplify2', x: 340, y: 160, w: 200, h: 56, color: 'blue', title: 'Amplify', sub: 'widget IIFE bundle', cat: 'edge' },
+  { id: 'alb', x: 600, y: 160, w: 200, h: 56, color: 'blue', title: 'ALB (HTTPS)', sub: 'application load balancer', cat: 'edge' },
+
+  { id: 'fargate', x: 600, y: 260, w: 200, h: 76, color: 'purple', title: 'ECS Fargate · 1 task', sub: '0.25 vCPU / 0.5 GiB', cat: 'compute' },
+
+  { id: 'rds', x: 460, y: 400, w: 200, h: 60, color: 'teal', title: 'RDS Postgres 16', sub: 'single AZ · no replica', cat: 'data' },
+  { id: 's3', x: 700, y: 400, w: 160, h: 60, color: 'teal', title: 'S3 (docs)', sub: 'presigned URLs', cat: 'data' },
+  { id: 'ses-c', x: 700, y: 480, w: 160, h: 44, color: 'amber', title: 'SES (email)', cat: 'external' },
+];
+
+const EDGES_CURRENT = [
+  { from: 'internet', to: 'route1', type: 'down' },
+  { from: 'internet', to: 'route2', type: 'down' },
+  { from: 'internet', to: 'route3', type: 'down' },
+  { from: 'route1', to: 'amplify1' }, { from: 'route2', to: 'amplify2' }, { from: 'route3', to: 'alb' },
+  { from: 'alb', to: 'fargate' },
+  { from: 'fargate', to: 'rds', curve: true }, { from: 'fargate', to: 's3', curve: true }, { from: 'fargate', to: 'ses-c', curve: true },
+];
+
+const NODES_FUTURE = [
+  { id: 'internet', x: 380, y: 20, w: 120, h: 32, color: 'gray', title: 'Internet', cat: 'edge' },
+  { id: 'route1', x: 60, y: 80, w: 200, h: 44, color: 'blue', title: 'admin + marketing', cat: 'edge' },
+  { id: 'route2', x: 340, y: 80, w: 200, h: 44, color: 'blue', title: 'cdn.volumedocs.co.uk', sub: 'widget bundle', cat: 'edge' },
+  { id: 'route3', x: 620, y: 80, w: 200, h: 44, color: 'blue', title: 'api.volumedocs.co.uk', cat: 'edge' },
+
+  { id: 'waf-admin', x: 60, y: 144, w: 200, h: 40, color: 'gray', title: 'AWS WAF', sub: 'OWASP + bot rules', cat: 'sec', isNew: true },
+  { id: 'cloudfront', x: 340, y: 144, w: 200, h: 40, color: 'blue', title: 'CloudFront', sub: 'CDN', cat: 'edge', isNew: true },
+  { id: 'waf-api', x: 620, y: 144, w: 200, h: 40, color: 'gray', title: 'AWS WAF', sub: 'OWASP + bot rules', cat: 'sec', isNew: true },
+
+  { id: 'amplify1', x: 60, y: 198, w: 200, h: 44, color: 'blue', title: 'Amplify', sub: 'admin + marketing', cat: 'edge' },
+  { id: 'amplify2', x: 340, y: 198, w: 200, h: 44, color: 'blue', title: 'Amplify', sub: 'widget bundle', cat: 'edge' },
+  { id: 'alb', x: 620, y: 198, w: 200, h: 44, color: 'blue', title: 'ALB', cat: 'edge' },
+
+  { id: 'fargate-api', x: 470, y: 270, w: 220, h: 70, color: 'purple', title: 'ECS Fargate (api)', sub: '2-6 tasks · 0.5 vCPU / 1 GiB', cat: 'compute', isChanged: true },
+  { id: 'fargate-worker', x: 720, y: 270, w: 140, h: 70, color: 'purple', title: 'Worker', sub: '1-4 tasks · SQS', cat: 'compute', isNew: true },
+
+  { id: 'redis', x: 280, y: 350, w: 180, h: 56, color: 'teal', title: 'ElastiCache Redis', sub: 'rate limit · sessions', cat: 'data', isNew: true },
+  { id: 'sqs', x: 600, y: 360, w: 180, h: 50, color: 'teal', title: 'SQS + DLQ', sub: 'embed · summarise · email', cat: 'data', isNew: true },
+
+  { id: 'rds', x: 60, y: 440, w: 240, h: 76, color: 'teal', title: 'RDS Postgres 16', sub: 'Multi-AZ · db.t4g.medium', cat: 'data', isChanged: true },
+  { id: 'replica', x: 320, y: 440, w: 200, h: 76, color: 'teal', title: 'Read replica', sub: 'widget + insights reads', cat: 'data', isNew: true },
+  { id: 's3', x: 540, y: 440, w: 150, h: 76, color: 'teal', title: 'S3', sub: 'docs + PDFs + backup', cat: 'data' },
+  { id: 'ses', x: 710, y: 440, w: 150, h: 76, color: 'amber', title: 'SES (prod)', sub: 'bounce tracking', cat: 'external', isChanged: true },
+
+  { id: 'secrets', x: 60, y: 540, w: 200, h: 50, color: 'gray', title: 'Secrets Manager', sub: 'DB · Stripe · Voyage · JWT', cat: 'sec', isNew: true },
+  { id: 'cloudwatch', x: 290, y: 540, w: 240, h: 50, color: 'gray', title: 'CloudWatch + SNS → Slack', sub: 'alarms + dashboard', cat: 'sec', isNew: true },
+];
+
+const EDGES_FUTURE = [
+  { from: 'internet', to: 'route1', type: 'down' }, { from: 'internet', to: 'route2', type: 'down' }, { from: 'internet', to: 'route3', type: 'down' },
+  { from: 'route1', to: 'waf-admin' }, { from: 'route2', to: 'cloudfront' }, { from: 'route3', to: 'waf-api' },
+  { from: 'waf-admin', to: 'amplify1', isNew: true }, { from: 'cloudfront', to: 'amplify2', isNew: true }, { from: 'waf-api', to: 'alb', isNew: true },
+  { from: 'alb', to: 'fargate-api' },
+  { from: 'fargate-api', to: 'redis', isNew: true }, { from: 'fargate-worker', to: 'redis', isNew: true },
+  { from: 'fargate-api', to: 'sqs', isNew: true }, { from: 'fargate-worker', to: 'sqs', isNew: true },
+  { from: 'fargate-api', to: 'rds' }, { from: 'fargate-api', to: 'replica', isNew: true },
+  { from: 'fargate-api', to: 's3' }, { from: 'fargate-api', to: 'ses' },
+  { from: 'fargate-api', to: 'secrets', isNew: true, curve: true },
+];
+
+const DETAILS = {
+  internet: { title: 'Public internet', status: 'existing', what: 'Three subdomains route to three different surfaces. No change to the DNS layout — only what sits behind each one.', also: '' },
+  route1: { title: 'Admin + marketing domain', status: 'existing', what: 'volumedocs.co.uk hosts the admin dashboard, the knowledge base, and the marketing site as a single Amplify-served bundle.', also: '' },
+  route2: { title: 'CDN domain', status: 'existing', what: 'cdn.volumedocs.co.uk serves the widget IIFE bundle that customers embed in their sites.', also: '' },
+  route3: { title: 'API domain', status: 'existing', what: 'api.volumedocs.co.uk fronts the Hono API for admin and widget requests.', also: '' },
+  amplify1: { title: 'Amplify (admin)', status: 'existing', what: 'Auto-deploys from main on every push. Hosts the SPA + marketing pages.', also: '' },
+  amplify2: { title: 'Amplify (widget)', status: 'existing', what: 'Builds and serves the widget bundle. Hashed filenames mean customers can pin versions if needed.', also: '' },
+  alb: { title: 'Application Load Balancer', status: 'existing', what: 'HTTPS termination + path-based routing to ECS. Standard, not interesting.', also: '' },
+  fargate: { title: 'ECS Fargate · 1 task', status: 'existing', what: 'Single 0.25 vCPU / 0.5 GiB task running the Hono API. Fine for POC; first real traffic spike will exhaust it.', also: 'Bottleneck: any spike → out of CPU/memory → 503s. No HA — task restart = brief outage.' },
+  rds: { title: 'RDS Postgres 16', status: 'changed', what: 'CURRENT: single-AZ, no replica, in public subnet with SG allow-list.\n\nFUTURE: Multi-AZ for HA, db.t4g.medium, moved into private subnet. Read replica added separately.', also: 'Aurora Serverless v2 is the alternative — fewer knobs, ~£40/mo more. Decision: stick with RDS until ~customer #20.' },
+  s3: { title: 'S3 (docs + backups)', status: 'existing', what: 'Customer documents via presigned URLs. Future: lifecycle rules move objects to IA storage class after 90 days, versioning enabled for the docs bucket.', also: '' },
+  'ses-c': { title: 'SES (sandbox)', status: 'existing', what: 'Transactional + release-note emails. Currently in SES sandbox mode (limited recipients).', also: '' },
+  'waf-admin': { title: 'AWS WAF (admin)', status: 'new', what: 'OWASP managed rule set + bot control + per-IP rate buckets at the edge, in front of the admin Amplify app.', also: 'Cheaper than in-process rate limiting for noisy attackers. Ships last in the migration plan — once there are customers worth defending.' },
+  'waf-api': { title: 'AWS WAF (API)', status: 'new', what: 'Same managed ruleset, in front of the API ALB. Most critical of the three WAFs since the API is the most attractive target.', also: '' },
+  cloudfront: { title: 'CloudFront', status: 'new', what: 'CDN in front of api.volumedocs.co.uk with cache rules on /v1/widget/articles GETs by widget key + path, 60s TTL.', also: 'The reason this matters: 10 customers × 100k MAU × cached responses = RDS untouched on ~90% of widget reads.' },
+  amplify1: { title: 'Amplify (admin)', status: 'existing', what: 'Unchanged. Still auto-deploys from main.', also: '' },
+  amplify2: { title: 'Amplify (widget)', status: 'existing', what: 'Unchanged.', also: '' },
+  alb: { title: 'Application Load Balancer', status: 'existing', what: 'Unchanged structurally; now targeted by WAF and feeds two Fargate services.', also: '' },
+  'fargate-api': { title: 'ECS Fargate (api)', status: 'changed', what: 'Sized up from 0.25/0.5 to 0.5 vCPU / 1 GiB per task. Min 2 tasks (HA), max 6 (auto-scale on 60% CPU target).', also: 'Min 2 is the HA win — single-task restarts no longer cause outages. Scales down at night so cost is reasonable.' },
+  'fargate-worker': { title: 'ECS Fargate (worker)', status: 'new', what: 'Separate service pulling jobs from SQS. Handles embeddings, AI summaries, bulk release-note emails, summary PDF generation.', also: 'Why: these jobs shouldn\'t block API request threads. SQS gives you retries + DLQ for free.' },
+  redis: { title: 'ElastiCache Redis', status: 'new', what: 'cache.t4g.micro. Holds rate-limit counters, frequency caps, short-lived session state, cached site settings, cached widget key lookups.', also: 'Unlocks horizontal scale — the current in-memory rate limiter breaks the moment you have 2 tasks (user gets 2× their cap).' },
+  sqs: { title: 'SQS standard queue + DLQ', status: 'new', what: 'Job queue feeding the worker. Standard (not FIFO) since none of the job types need strict ordering. DLQ catches anything failing after N retries.', also: '' },
+  replica: { title: 'RDS read replica', status: 'new', what: 'Single replica handling widget reads and /insights/* queries. Routed via a separate Drizzle client so it\'s opt-in per query, not transparent.', also: 'Async replication lag is OK for these workloads (widget reads tolerate seconds of staleness; insights tolerate minutes).' },
+  ses: { title: 'SES (production)', status: 'changed', what: 'Out of sandbox, with a config set + SNS topic for bounce/complaint tracking. Alarm fires when bounce rate > 5%.', also: '' },
+  secrets: { title: 'AWS Secrets Manager', status: 'new', what: 'DB password, Stripe webhook secret, Anthropic + Voyage API keys, JWT signing secret. ECS task pulls at startup.', also: 'Why first in the migration plan: drop-in change, no code path rewrites, big security + compliance win.' },
+  cloudwatch: { title: 'CloudWatch + Slack alerts', status: 'new', what: 'Min alarm set: ALB 5xx > 1%, RDS CPU > 80%, ECS task health, SES bounce rate > 5%. Alarms publish to SNS → Slack webhook.', also: 'First customer outage should not be how you find out.' },
+};
+
+const STATE_SUMMARIES = {
+  current: 'Single Fargate task, single-AZ RDS, no caching layer, no async workers, no monitoring. Works fine for one tenant — falls over the moment real traffic arrives.',
+  future: 'Adds: WAF, CloudFront, Redis, SQS + worker, Multi-AZ RDS + read replica, Secrets Manager, CloudWatch alarms. Eight components, ~£340-400/mo. Toggle the "what\'s new" switch to highlight changes.',
+};
+
+const MIGRATION = [
+  { title: 'Secrets Manager', why: 'Move DB password, Stripe webhook, Anthropic/Voyage keys, JWT secret. ECS task pulls at startup.', payoff: 'No plaintext env-var rotation. Easier compliance story.', effort: 'low' },
+  { title: 'CloudWatch alarms + Slack', why: 'ALB 5xx, RDS CPU, ECS task health, SES bounce rate. SNS topic → Slack webhook.', payoff: 'Couple of hours of work. First customer outage stops being how you find out.', effort: 'low' },
+  { title: 'GitHub Actions deploy', why: '~30 lines of YAML to build the API image, push to ECR, update the ECS task definition.', payoff: 'Kills the manual docker + task-def dance. Removes deploy as a person-specific risk.', effort: 'low' },
+  { title: 'ECS auto-scaling (2-6)', why: 'Min 2 / max 6 tasks, target-track on CPU at 60%. Config change only.', payoff: 'HA from min=2 alone. Spikes handled automatically. Scales down at night.', effort: 'low' },
+  { title: 'ElastiCache + swap rate limiter', why: 'Stand up cache.t4g.micro. Replace in-memory rate limiter with Redis-backed one.', payoff: 'Unlocks horizontal scale. Also caches site settings + widget key lookups → drops RDS pressure.', effort: 'med' },
+  { title: 'RDS Multi-AZ + read replica', why: 'RDS modify (no downtime for Multi-AZ enable). Add read replica. Route widget + insights reads through a separate Drizzle client.', payoff: 'One-AZ event no longer = downtime. Widget reads stop competing with admin writes.', effort: 'med' },
+  { title: 'SQS + worker service', why: 'Stand up SQS + DLQ. New Fargate service that pulls and processes. Move embed, summarise, bulk-email, summary-pdf jobs off the API path.', payoff: 'Biggest change. API request threads stop blocking on slow work. Retries + DLQ for free.', effort: 'high' },
+  { title: 'CloudFront in front of widget API', why: 'Cache rules on /v1/widget/articles GETs by widget key + path, 60s TTL.', payoff: '~90% of widget reads served from CDN. Big reduction in RDS load and bandwidth cost.', effort: 'med' },
+  { title: 'AWS WAF', why: 'Attach managed OWASP rules + bot control to the ALB and Amplify apps.', payoff: 'Edge defence against the noisy attackers worth blocking once you have customers worth defending.', effort: 'low' },
+];
+
+const COSTS = [
+  { name: 'Fargate API (2 tasks avg, 0.5 vCPU / 1 GiB)', cost: '~£35' },
+  { name: 'Fargate worker (1 task avg)', cost: '~£25' },
+  { name: 'RDS db.t4g.medium Multi-AZ', cost: '~£140' },
+  { name: 'RDS read replica', cost: '~£70' },
+  { name: 'ElastiCache cache.t4g.micro', cost: '~£12' },
+  { name: 'ALB', cost: '~£20' },
+  { name: 'CloudFront', cost: '~£5-15' },
+  { name: 'S3 + transfer', cost: '~£10-30' },
+  { name: 'SES', cost: '£0.08/1k' },
+  { name: 'Amplify', cost: '~£5' },
+  { name: 'WAF', cost: '~£5' },
+  { name: 'Secrets Manager + CloudWatch', cost: '~£10' },
+  { name: 'Total', cost: '~£340-400' },
+];
+
+const NS = 'http://www.w3.org/2000/svg';
+const content = document.getElementById('diagram-content');
+const detail = document.getElementById('detail');
+const stateSummary = document.getElementById('state-summary');
+let currentState = 'current';
+let diffMode = false;
+
+function render(state) {
+  currentState = state;
+  const nodes = state === 'current' ? NODES_CURRENT : NODES_FUTURE;
+  const edges = state === 'current' ? EDGES_CURRENT : EDGES_FUTURE;
+  content.innerHTML = '';
+  stateSummary.textContent = STATE_SUMMARIES[state];
+  document.getElementById('diff-label').style.display = state === 'future' ? 'inline-flex' : 'none';
+  document.getElementById('diagram').classList.toggle('diff-on', diffMode && state === 'future');
+
+  edges.forEach(e => {
+    const from = nodes.find(n => n.id === e.from);
+    const to = nodes.find(n => n.id === e.to);
+    if (!from || !to) return;
+    const fx = from.x + from.w / 2;
+    const fy = from.y + from.h;
+    const tx = to.x + to.w / 2;
+    const ty = to.y;
+    const line = document.createElementNS(NS, 'path');
+    let d;
+    if (e.curve) {
+      const midY = (fy + ty) / 2;
+      d = `M ${fx} ${fy} C ${fx} ${midY}, ${tx} ${midY}, ${tx} ${ty}`;
+    } else if (Math.abs(fx - tx) > 20 && Math.abs(fy - ty) < 200) {
+      const midY = fy + (ty - fy) / 2;
+      d = `M ${fx} ${fy} L ${fx} ${midY} L ${tx} ${midY} L ${tx} ${ty}`;
+    } else {
+      d = `M ${fx} ${fy} L ${tx} ${ty}`;
+    }
+    line.setAttribute('d', d);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', e.isNew ? '#534AB7' : 'var(--t)');
+    line.setAttribute('stroke-width', e.isNew ? '1.2' : '1');
+    if (e.isNew) line.setAttribute('stroke-dasharray', '4 3');
+    line.setAttribute('marker-end', 'url(#arrow)');
+    line.setAttribute('class', 'edge ' + (e.isNew ? 'new' : 'not-new'));
+    content.appendChild(line);
+  });
+
+  nodes.forEach(n => {
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'node-g' + (n.isNew ? ' new' : '') + (n.isChanged ? ' changed' : ''));
+    g.setAttribute('data-id', n.id);
+    const rect = document.createElementNS(NS, 'rect');
+    rect.setAttribute('x', n.x); rect.setAttribute('y', n.y);
+    rect.setAttribute('width', n.w); rect.setAttribute('height', n.h);
+    rect.setAttribute('rx', '8'); rect.setAttribute('stroke-width', '0.5');
+    rect.setAttribute('class', 'c-' + n.color);
+    g.appendChild(rect);
+
+    const text1 = document.createElementNS(NS, 'text');
+    text1.setAttribute('class', 'th');
+    text1.setAttribute('x', n.x + n.w / 2); text1.setAttribute('y', n.sub ? n.y + n.h / 2 - 8 : n.y + n.h / 2);
+    text1.setAttribute('text-anchor', 'middle'); text1.setAttribute('dominant-baseline', 'central');
+    text1.textContent = n.title;
+    g.appendChild(text1);
+
+    if (n.sub) {
+      const text2 = document.createElementNS(NS, 'text');
+      text2.setAttribute('class', 'ts');
+      text2.setAttribute('x', n.x + n.w / 2); text2.setAttribute('y', n.y + n.h / 2 + 10);
+      text2.setAttribute('text-anchor', 'middle'); text2.setAttribute('dominant-baseline', 'central');
+      text2.textContent = n.sub;
+      g.appendChild(text2);
+    }
+
+    if (n.isNew) {
+      const badge = document.createElementNS(NS, 'g');
+      badge.setAttribute('class', 'badge-new');
+      const br = document.createElementNS(NS, 'rect');
+      br.setAttribute('x', n.x + n.w - 32); br.setAttribute('y', n.y - 8);
+      br.setAttribute('width', 32); br.setAttribute('height', 16); br.setAttribute('rx', 8);
+      br.setAttribute('fill', '#3B6D11');
+      badge.appendChild(br);
+      const bt = document.createElementNS(NS, 'text');
+      bt.setAttribute('x', n.x + n.w - 16); bt.setAttribute('y', n.y);
+      bt.setAttribute('text-anchor', 'middle'); bt.setAttribute('dominant-baseline', 'central');
+      bt.setAttribute('font-size', '10'); bt.setAttribute('font-weight', '500'); bt.setAttribute('fill', 'white');
+      bt.textContent = 'NEW';
+      badge.appendChild(bt);
+      g.appendChild(badge);
+    }
+
+    g.addEventListener('mouseenter', () => showDetail(n.id));
+    g.addEventListener('click', () => {
+      document.querySelectorAll('.node-g').forEach(x => x.classList.remove('highlight'));
+      g.classList.add('highlight');
+      showDetail(n.id);
+    });
+    content.appendChild(g);
+  });
+}
+
+function showDetail(id) {
+  const d = DETAILS[id];
+  if (!d) return;
+  const pillClass = { new: 'pill-new', changed: 'pill-changed', existing: 'pill-existing', removed: 'pill-removed' }[d.status];
+  const pillLabel = { new: 'New', changed: 'Changed', existing: 'Existing', removed: 'Removed' }[d.status];
+  detail.innerHTML = `
+    <div class="title"><span>${d.title}</span><span class="pill ${pillClass}">${pillLabel}</span></div>
+    <div style="white-space: pre-line; margin-bottom: ${d.also ? '8px' : '0'};">${d.what}</div>
+    ${d.also ? `<div style="font-size:12px;color:var(--color-text-tertiary);padding-top:8px;border-top:0.5px solid var(--color-border-tertiary);">${d.also}</div>` : ''}
+  `;
+}
+
+document.querySelectorAll('.state-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.state-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render(btn.dataset.state);
+  });
+});
+
+document.getElementById('diff-toggle').addEventListener('change', e => {
+  diffMode = e.target.checked;
+  document.getElementById('diagram').classList.toggle('diff-on', diffMode && currentState === 'future');
+});
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+const migList = document.getElementById('migration-list');
+MIGRATION.forEach((step, i) => {
+  const li = document.createElement('li');
+  li.className = 'migration-step';
+  li.innerHTML = `
+    <div class="num">${i + 1}</div>
+    <div class="body">
+      <h3>${step.title}</h3>
+      <p>${step.why}</p>
+      <div class="why">${step.payoff}</div>
+    </div>
+    <span class="effort effort-${step.effort}">${step.effort}</span>
+  `;
+  migList.appendChild(li);
+});
+
+const costBody = document.getElementById('cost-body');
+COSTS.forEach(c => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${c.name}</td><td>${c.cost}</td>`;
+  costBody.appendChild(tr);
+});
+
+render('current');
+</script>
+</body>
+</html>

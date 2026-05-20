@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volume — design documents</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --surface-2: #f5f4ef;
+  --text: #1a1a18;
+  --text-muted: #5f5e5a;
+  --text-faint: #888780;
+  --border: rgba(60,60,55,0.12);
+  --border-strong: rgba(60,60,55,0.25);
+  --accent: #534AB7;
+  --accent-bg: #EEEDFE;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131311;
+    --surface: #1f1f1d;
+    --surface-2: #2a2a27;
+    --text: #f5f4ef;
+    --text-muted: #b4b2a9;
+    --text-faint: #888780;
+    --border: rgba(245,244,239,0.10);
+    --border-strong: rgba(245,244,239,0.22);
+    --accent: #AFA9EC;
+    --accent-bg: #2d2867;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 2rem;
+  width: 100%;
+  flex: 1;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin: 0 0 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-bg);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+h1 {
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: 500;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.lede {
+  font-size: 17px;
+  color: var(--text-muted);
+  margin: 0 0 3rem;
+  max-width: 580px;
+}
+.section-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0 0 1rem;
+  font-weight: 500;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 0 0 3rem;
+}
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.card:hover .card-arrow { transform: translateX(3px); color: var(--accent); }
+.card-arrow {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 20px;
+  color: var(--text-faint);
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+.card-tag {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  align-self: flex-start;
+  margin: 0 0 14px;
+}
+.card h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0 0 6px;
+  padding-right: 28px;
+  letter-spacing: -0.01em;
+}
+.card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.card-meta {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.card-meta span { display: inline-flex; align-items: center; gap: 4px; }
+footer {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  width: 100%;
+  font-size: 13px;
+  color: var(--text-faint);
+  border-top: 0.5px solid var(--border);
+}
+footer a { color: var(--text-muted); text-decoration: none; border-bottom: 0.5px solid var(--border-strong); }
+footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="eyebrow"><i class="ti ti-book-2" aria-hidden="true"></i> Volume</span>
+  <h1>Design documents</h1>
+  <p class="lede">Architecture diagrams and reference material for systems Volume builds and operates. Click through to explore.</p>
+
+  <div class="section-label">Live diagrams</div>
+  <div class="grid">
+    <a class="card" href="chatbotarchitecture.html">
+      <span class="card-arrow"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></span>
+      <span class="card-tag">Interactive</span>
+      <h2>Chat bot architecture</h2>
+      <p>How the Volume Docs chat bot works — orchestrator, tools, and where Claude sits. Step through a single message journey end to end.</p>
+      <div class="card-meta">
+        <span><i class="ti ti-pointer" aria-hidden="true"></i> Clickable</span>
+        <span><i class="ti ti-route" aria-hidden="true"></i> Animated walkthrough</span>
+      </div>
+    </a>
+
+    <a class="card" href="aws-architecture.html">
+      <span class="card-arrow"><i class="ti ti-arrow-up-right" aria-hidden="true"></i></span>
+      <span class="card-tag">Interactive</span>
+      <h2>AWS architecture</h2>
+      <p>Current POC topology vs. the target for ten paying customers. Toggle between states, highlight what's new, and walk through the migration plan.</p>
+      <div class="card-meta">
+        <span><i class="ti ti-arrows-left-right" aria-hidden="true"></i> Current vs future</span>
+        <span><i class="ti ti-currency-pound" aria-hidden="true"></i> Cost breakdown</span>
+      </div>
+    </a>
+  </div>
+</div>
+
+<footer>
+  Maintained on <a href="https://github.com/charlieprudden/Documents">GitHub</a>. Last updated when the repo was.
+</footer>
+</body>
+</html>
